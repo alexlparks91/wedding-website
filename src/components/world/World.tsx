@@ -516,7 +516,7 @@ export default function World() {
 				</button>
 			)}
 
-			{place && !inside && (
+			{place && !inside && selected !== 'home' && (
 				<aside className={styles.panel} aria-live="polite">
 					<button
 						type="button"
