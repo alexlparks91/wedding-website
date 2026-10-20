@@ -1,0 +1,8 @@
+Character models and animation clips from models.codelove.in (Rigged Adults).
+
+License: MIT — keep this notice with the models when shipping or sharing.
+
+Sources:
+- Male Adult 06 → tony.glb
+- Female Adult 14 → alex.glb
+- Walk / idle clips → m_walk.glb, f_walk.glb, m_idle.glb, f_idle.glb

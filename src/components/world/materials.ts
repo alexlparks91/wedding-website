@@ -1,0 +1,16 @@
+export const colors = {
+	brick: '#8b4a3a',
+	brickDark: '#6e382c',
+	limestone: '#d4c7b0',
+	trim: '#2a2420',
+	roof: '#3a3532',
+	glass: '#9ec4d4',
+	glow: '#fff1c9',
+	grass: '#7a8e76',
+	path: '#c9c2b4',
+	street: '#4a4a48',
+	tree: '#3f6b45',
+	trunk: '#5c4030',
+	sky: '#b8c9c4',
+	fog: '#c5d4cf',
+} as const;
