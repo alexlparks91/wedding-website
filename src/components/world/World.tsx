@@ -170,6 +170,7 @@ function Scene({
 	onSelectPerson,
 	onSelectCat,
 	onEnterCondo,
+	onGoToRoom,
 	onGroundFly,
 	onFlightArrived,
 	onCameraChange,
@@ -182,6 +183,7 @@ function Scene({
 	onSelectPerson: (focus: PersonFocus) => void;
 	onSelectCat: (focus: CatFocus) => void;
 	onEnterCondo: () => void;
+	onGoToRoom: (room: Exclude<CondoRoomId, 'hall'>) => void;
 	onGroundFly: (point: [number, number, number]) => void;
 	onFlightArrived: (state: CameraState) => void;
 	onCameraChange: (state: CameraState) => void;
@@ -217,7 +219,12 @@ function Scene({
 				<ambientLight intensity={0.85} />
 				<directionalLight position={[6, 14, 8]} intensity={0.9} castShadow />
 				<hemisphereLight args={['#fff8f0', '#6a5a4a', 0.5]} />
-				<CondoInterior selectedCat={selectedCat} onSelectCat={onSelectCat} />
+				<CondoInterior
+					selectedCat={selectedCat}
+					onSelectCat={onSelectCat}
+					condoRoom={condoRoom}
+					onPassThroughDoor={onGoToRoom}
+				/>
 				<OrbitControls
 					makeDefault
 					enablePan={false}
@@ -457,7 +464,7 @@ export default function World() {
 	const place = selected ? places[selected] : null;
 	const camPos = sphericalToPosition(cameraState);
 	const canvasInstanceKey = inside
-		? `condo-k18-${condoRoom}-${canvasKey}`
+		? `condo-k20-${condoRoom}-${canvasKey}`
 		: `street-alex-hair-${canvasKey}`;
 
 	return (
@@ -489,6 +496,7 @@ export default function World() {
 							onSelectPerson={handleSelectPerson}
 							onSelectCat={handleSelectCat}
 							onEnterCondo={handleEnterCondo}
+							onGoToRoom={handleGoToRoom}
 							onGroundFly={handleGroundFly}
 							onFlightArrived={handleFlightArrived}
 							onCameraChange={handleCameraChange}
@@ -498,10 +506,10 @@ export default function World() {
 			)}
 
 			<header className={styles.chrome}>
-				<p className={styles.mark}>{inside ? 'Unit 2F · k18' : 'Our world'}</p>
+				<p className={styles.mark}>{inside ? 'Unit 2F' : 'Our world'}</p>
 				<p className={styles.hint}>
 					{inside
-						? 'Drag to orbit · Scroll to zoom · Click Olive or Neil'
+						? 'Drag to orbit · Click the doorway to go through · Or use Kitchen / Living below'
 						: 'Click the door by the mural to come inside · Drag to look'}
 				</p>
 			</header>

@@ -1,5 +1,6 @@
 import { FT, PLAN, PLAN_CENTERS } from './condoLayout';
 import { KitchenCats, type CatFocus, type CatId } from './CatWalkers';
+import { DOOR, KitchenLivingDoor, LivingDining } from './LivingDining';
 
 const WALL = '#f4f1ec';
 const FLOOR_TILE = '#3a3a38';
@@ -105,9 +106,13 @@ function Stool({ position }: { position: [number, number, number] }) {
 export function CondoInterior({
 	selectedCat = null,
 	onSelectCat,
+	condoRoom = 'kitchen',
+	onPassThroughDoor,
 }: {
 	selectedCat?: CatId | null;
 	onSelectCat?: (focus: CatFocus) => void;
+	condoRoom?: 'kitchen' | 'living';
+	onPassThroughDoor?: (to: 'kitchen' | 'living') => void;
 } = {}) {
 	const k = PLAN.kitchen;
 	const [kcx, kcz] = PLAN_CENTERS.kitchen;
@@ -122,9 +127,9 @@ export function CondoInterior({
 	const streetR = streetL + streetW;
 
 	// South wall: dining doorway → fridge (other wall)
-	const diningW = 1.0;
-	const diningL = west + 0.04;
-	const diningR = diningL + diningW;
+	const diningW = DOOR.w;
+	const diningL = DOOR.x0;
+	const diningR = DOOR.x1;
 	const fridgeW = 0.9;
 	const fridgeX = diningR + fridgeW / 2 + 0.05;
 	const sinkW = 0.7;
@@ -173,14 +178,12 @@ export function CondoInterior({
 				rotation={[0, -0.55, 0]}
 			/>
 
-			{/* ========== Dining doorway + fridge on the opposite wall ========== */}
-			<Box position={[diningL + 0.04, 1.1, south]} args={[0.08, 2.2, 0.16]} color="#e8e4dc" />
-			<Box position={[diningR, 1.1, south]} args={[0.08, 2.2, 0.16]} color="#e8e4dc" />
-			<Box
-				position={[(diningL + diningR) / 2, 2.22, south]}
-				args={[diningW - 0.04, 0.1, 0.16]}
-				color="#e8e4dc"
-			/>
+			{/* Doorway kitchen ↔ living — clickable both ways */}
+			<KitchenLivingDoor fromRoom={condoRoom} onPassThrough={onPassThroughDoor} />
+
+			{/* Living / dining through the doorway (same flip as kitchen) */}
+			<LivingDining />
+
 			{/* Fridge faces into room; rotate so doors face north */}
 			<group position={[fridgeX, 0, south + 0.4]} rotation={[0, Math.PI, 0]}>
 				<Fridge position={[0, 0, 0]} />
