@@ -274,14 +274,15 @@ export function LivingDining() {
 				</mesh>
 			))}
 
-			{/* Living — left of walkway: charcoal rug, L-sofa, coffee table */}
-			<Box position={[furnCx - 0.15, 0.02, livingZ]} args={[2.6, 0.04, 2.2]} color="#3a3836" />
-			{/* Long seat toward furniture wall; chaise opens toward walkway */}
-			<Box position={[furnCx - 0.55, 0.4, livingZ + 0.35]} args={[2.2, 0.5, 0.9]} color={SOFA} />
-			<Box position={[furnCx - 0.55, 0.82, livingZ + 0.55]} args={[2.2, 0.4, 0.26]} color={SOFA_DARK} />
-			<Box position={[furnCx + 0.55, 0.4, livingZ - 0.15]} args={[0.9, 0.5, 1.7]} color={SOFA} />
-			<Box position={[furnCx + 0.75, 0.82, livingZ - 0.15]} args={[0.26, 0.4, 1.7]} color={SOFA_DARK} />
-			<Box position={[furnCx - 0.2, 0.32, livingZ - 0.15]} args={[1.0, 0.08, 0.55]} color={WOOD_LIGHT} />
+			{/* Living — L-sofa: long seat faces TV; chaise against left wall */}
+			<Box position={[furnCx - 0.05, 0.02, livingZ]} args={[2.6, 0.04, 2.2]} color="#3a3836" />
+			{/* Long seat */}
+			<Box position={[furnCx + 0.15, 0.4, livingZ + 0.35]} args={[2.0, 0.5, 0.9]} color={SOFA} />
+			<Box position={[furnCx + 0.15, 0.82, livingZ + 0.55]} args={[2.0, 0.4, 0.26]} color={SOFA_DARK} />
+			{/* Chaise + backrest on left wall */}
+			<Box position={[west + 0.55, 0.4, livingZ - 0.05]} args={[0.85, 0.5, 1.7]} color={SOFA} />
+			<Box position={[west + 0.28, 0.82, livingZ - 0.05]} args={[0.26, 0.4, 1.7]} color={SOFA_DARK} />
+			<Box position={[furnCx + 0.1, 0.32, livingZ - 0.2]} args={[1.0, 0.08, 0.55]} color={WOOD_LIGHT} />
 			{[
 				[-0.4, -0.2],
 				[0.4, -0.2],
@@ -290,7 +291,7 @@ export function LivingDining() {
 			].map((o, i) => (
 				<Box
 					key={i}
-					position={[furnCx - 0.2 + o[0], 0.16, livingZ - 0.15 + o[1]]}
+					position={[furnCx + 0.1 + o[0], 0.16, livingZ - 0.2 + o[1]]}
 					args={[0.04, 0.28, 0.04]}
 					color={WOOD}
 				/>
@@ -306,12 +307,6 @@ export function LivingDining() {
 			<Box position={[furnCx - 0.15, 1.55, farZ + 0.08]} args={[1.15, 0.75, 0.04]} color="#1a4a9a" />
 			<Box position={[furnCx - 0.15, 1.55, farZ + 0.1]} args={[0.35, 0.35, 0.02]} color="#e8c84a" />
 			<Box position={[furnCx + 0.15, 1.65, farZ + 0.1]} args={[0.35, 0.18, 0.02]} color="#e85a5a" />
-
-			{/* Litter robot at sofa corner (out of walkway) */}
-			<mesh position={[furnEast - 0.4, 0.28, livingZ - 0.5]}>
-				<cylinderGeometry args={[0.28, 0.3, 0.55, 16]} />
-				<meshStandardMaterial color="#f4f4f2" roughness={0.45} />
-			</mesh>
 
 			{/* Ceiling lights */}
 			<mesh position={[diningX, 2.55, diningZ]}>

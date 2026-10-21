@@ -288,11 +288,11 @@ export function CondoInterior({
 			<pointLight position={[kcx, 2.8, kcz]} intensity={0.9} distance={10} color="#fff4e6" />
 			<ambientLight intensity={0.4} />
 			<hemisphereLight args={['#fff8f0', '#6a5a4a', 0.35]} />
+
+			{/* Cats in flip group so they roam kitchen + living in the same space */}
+			<KitchenCats selected={selectedCat} onSelect={onSelectCat} />
 			</group>
 		</group>
-
-			{/* Cats walk in world space (room footprint unchanged by 180° furniture flip) */}
-			<KitchenCats selected={selectedCat} onSelect={onSelectCat} />
 		</>
 	);
 }

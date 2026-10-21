@@ -1,7 +1,8 @@
 import { useRef } from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
-import { PLAN, PLAN_CENTERS } from './condoLayout';
+import { FT, PLAN } from './condoLayout';
+import { DOOR } from './LivingDining';
 
 export type CatId = 'olive' | 'neil';
 
@@ -201,21 +202,30 @@ function CatMesh({
 	);
 }
 
+type RoomRect = {
+	cx: number;
+	cz: number;
+	rx: number;
+	rz: number;
+};
+
+type CondoWalk = {
+	kitchen: RoomRect;
+	living: RoomRect;
+	doorX0: number;
+	doorX1: number;
+	doorZ: number;
+};
+
 function WanderingCat({
 	kind,
-	cx,
-	cz,
-	radiusX,
-	radiusZ,
+	walk,
 	selected,
 	paused,
 	onSelect,
 }: {
 	kind: CatKind;
-	cx: number;
-	cz: number;
-	radiusX: number;
-	radiusZ: number;
+	walk: CondoWalk;
 	selected: boolean;
 	paused: boolean;
 	onSelect?: (focus: CatFocus) => void;
@@ -223,7 +233,6 @@ function WanderingCat({
 	const root = useRef<THREE.Group>(null);
 	const prev = useRef(new THREE.Vector3());
 	const pausedPos = useRef<THREE.Vector3 | null>(null);
-	const pausedRotY = useRef(0);
 
 	useFrame(({ clock }) => {
 		if (!root.current) return;
@@ -231,18 +240,47 @@ function WanderingCat({
 		if (paused) {
 			if (!pausedPos.current) {
 				pausedPos.current = root.current.position.clone();
-				pausedRotY.current = root.current.rotation.y;
 			}
 			root.current.position.copy(pausedPos.current);
-			// Face the street / camera-ish when focused
 			root.current.rotation.y = Math.PI / 2;
 			return;
 		}
 
 		pausedPos.current = null;
 		const t = clock.elapsedTime * kind.speed + kind.phase;
-		const x = cx + Math.cos(t) * radiusX + Math.sin(t * 0.37) * 0.15;
-		const z = cz + Math.sin(t * 0.85 + kind.phase) * radiusZ;
+		/** Slow cycle: kitchen → door → living → door → kitchen */
+		const cycle = (t * 0.09 + kind.phase * 0.2) % 1;
+		const local = t * 1.35;
+		const { kitchen: k, living: L, doorX0, doorX1, doorZ } = walk;
+		const doorMid = (doorX0 + doorX1) / 2;
+		const doorHalf = (doorX1 - doorX0) * 0.35;
+
+		let x: number;
+		let z: number;
+		if (cycle < 0.38) {
+			// Kitchen loop
+			const u = (cycle / 0.38) * Math.PI * 2;
+			x = k.cx + Math.cos(u + kind.phase) * k.rx;
+			z = k.cz + Math.sin(u * 0.9 + kind.phase) * k.rz;
+		} else if (cycle < 0.5) {
+			// Kitchen → living through doorway
+			const a = (cycle - 0.38) / 0.12;
+			x = THREE.MathUtils.lerp(k.cx, doorMid, Math.min(1, a * 1.4)) + Math.sin(local) * doorHalf * 0.3;
+			x = THREE.MathUtils.clamp(x, doorX0 + 0.12, doorX1 - 0.12);
+			z = THREE.MathUtils.lerp(k.cz - k.rz * 0.6, L.cz + L.rz * 0.55, a);
+		} else if (cycle < 0.88) {
+			// Living loop
+			const u = ((cycle - 0.5) / 0.38) * Math.PI * 2;
+			x = L.cx + Math.cos(u + kind.phase) * L.rx;
+			z = L.cz + Math.sin(u * 0.95 + kind.phase) * L.rz;
+		} else {
+			// Living → kitchen through doorway
+			const a = (cycle - 0.88) / 0.12;
+			x = THREE.MathUtils.lerp(L.cx, doorMid, Math.min(1, a * 1.4)) + Math.sin(local) * doorHalf * 0.3;
+			x = THREE.MathUtils.clamp(x, doorX0 + 0.12, doorX1 - 0.12);
+			z = THREE.MathUtils.lerp(L.cz + L.rz * 0.55, k.cz - k.rz * 0.6, a);
+		}
+
 		prev.current.copy(root.current.position);
 		root.current.position.set(x, 0, z);
 		const dx = x - prev.current.x;
@@ -255,7 +293,7 @@ function WanderingCat({
 	function focus(): CatFocus {
 		const v = new THREE.Vector3();
 		if (root.current) root.current.getWorldPosition(v);
-		else v.set(cx, 0, cz);
+		else v.set(walk.kitchen.cx, 0, walk.kitchen.cz);
 		return {
 			id: kind.id,
 			position: [v.x, CAT_HEIGHT * 0.7, v.z],
@@ -287,29 +325,49 @@ type CatsProps = {
 	onSelect?: (focus: CatFocus) => void;
 };
 
-/** Olive (tuxedo) & Neil (tabby) wandering the kitchen. */
+/** Living depth — match LivingDining */
+const LIVING_DEPTH = (22 + 6 / 12) * FT;
+const MARGIN = 0.45;
+
+/** Olive (tuxedo) & Neil (tabby) — kitchen & living only, via doorway. */
 export function KitchenCats({ selected = null, onSelect }: CatsProps) {
-	const [cx, cz] = PLAN_CENTERS.kitchen;
 	const k = PLAN.kitchen;
+	const livingEast = DOOR.x1 - MARGIN;
+	const livingWest = DOOR.x1 - PLAN.living.w + MARGIN;
+	const livingFarZ = DOOR.z - LIVING_DEPTH + MARGIN;
+	const livingNearZ = DOOR.z - MARGIN;
+
+	const walk: CondoWalk = {
+		kitchen: {
+			cx: k.x + k.w * 0.5,
+			cz: k.z + k.d * 0.5,
+			rx: k.w * 0.5 - MARGIN,
+			rz: k.d * 0.5 - MARGIN,
+		},
+		living: {
+			cx: (livingWest + livingEast) / 2,
+			cz: (livingFarZ + livingNearZ) / 2,
+			rx: (livingEast - livingWest) / 2,
+			rz: (livingNearZ - livingFarZ) / 2,
+		},
+		doorX0: DOOR.x0,
+		doorX1: DOOR.x1,
+		doorZ: DOOR.z,
+	};
+
 	const paused = selected === 'olive' || selected === 'neil';
 	return (
 		<group>
 			<WanderingCat
 				kind={CATS[0]}
-				cx={cx - 0.2}
-				cz={cz}
-				radiusX={k.w * 0.22}
-				radiusZ={k.d * 0.22}
+				walk={walk}
 				selected={selected === 'olive'}
 				paused={paused}
 				onSelect={onSelect}
 			/>
 			<WanderingCat
 				kind={CATS[1]}
-				cx={cx + 0.15}
-				cz={cz + 0.1}
-				radiusX={k.w * 0.2}
-				radiusZ={k.d * 0.18}
+				walk={walk}
 				selected={selected === 'neil'}
 				paused={paused}
 				onSelect={onSelect}
