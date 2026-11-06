@@ -1,6 +1,9 @@
 import { FT, PLAN, PLAN_CENTERS } from './condoLayout';
 import { KitchenCats, type CatFocus, type CatId } from './CatWalkers';
+import { CondoCouple, type PersonFocus, type PersonId } from './CoupleWalkers';
+import { HallBath, LivingBathDoor } from './HallBath';
 import { DOOR, KitchenLivingDoor, LivingDining } from './LivingDining';
+import { LivingPrimaryDoor } from './PrimaryBedroom';
 
 const WALL = '#f4f1ec';
 const FLOOR_TILE = '#3a3a38';
@@ -106,13 +109,17 @@ function Stool({ position }: { position: [number, number, number] }) {
 export function CondoInterior({
 	selectedCat = null,
 	onSelectCat,
+	selectedPerson = null,
+	onSelectPerson,
 	condoRoom = 'kitchen',
 	onPassThroughDoor,
 }: {
 	selectedCat?: CatId | null;
 	onSelectCat?: (focus: CatFocus) => void;
-	condoRoom?: 'kitchen' | 'living';
-	onPassThroughDoor?: (to: 'kitchen' | 'living') => void;
+	selectedPerson?: PersonId | null;
+	onSelectPerson?: (focus: PersonFocus) => void;
+	condoRoom?: 'kitchen' | 'living' | 'primary' | 'bath';
+	onPassThroughDoor?: (to: 'kitchen' | 'living' | 'primary' | 'bath') => void;
 } = {}) {
 	const k = PLAN.kitchen;
 	const [kcx, kcz] = PLAN_CENTERS.kitchen;
@@ -179,10 +186,24 @@ export function CondoInterior({
 			/>
 
 			{/* Doorway kitchen ↔ living — clickable both ways */}
-			<KitchenLivingDoor fromRoom={condoRoom} onPassThrough={onPassThroughDoor} />
+			{(condoRoom === 'kitchen' || condoRoom === 'living') && (
+				<KitchenLivingDoor
+					fromRoom={condoRoom}
+					onPassThrough={onPassThroughDoor as ((to: 'kitchen' | 'living') => void) | undefined}
+				/>
+			)}
 
-			{/* Living / dining through the doorway (same flip as kitchen) */}
+			{/* Living / dining + primary + bath through the doorway (same flip as kitchen) */}
 			<LivingDining />
+			<HallBath />
+			<LivingPrimaryDoor
+				fromRoom={condoRoom === 'primary' ? 'primary' : 'living'}
+				onPassThrough={onPassThroughDoor as ((to: 'living' | 'primary') => void) | undefined}
+			/>
+			<LivingBathDoor
+				fromRoom={condoRoom === 'bath' ? 'bath' : 'living'}
+				onPassThrough={onPassThroughDoor as ((to: 'living' | 'bath') => void) | undefined}
+			/>
 
 			{/* Fridge faces into room; rotate so doors face north */}
 			<group position={[fridgeX, 0, south + 0.4]} rotation={[0, Math.PI, 0]}>
@@ -289,8 +310,9 @@ export function CondoInterior({
 			<ambientLight intensity={0.4} />
 			<hemisphereLight args={['#fff8f0', '#6a5a4a', 0.35]} />
 
-			{/* Cats in flip group so they roam kitchen + living in the same space */}
+			{/* Cats roam kitchen↔living; couple on the living sofa */}
 			<KitchenCats selected={selectedCat} onSelect={onSelectCat} />
+			<CondoCouple selected={selectedPerson} onSelect={onSelectPerson} />
 			</group>
 		</group>
 		</>

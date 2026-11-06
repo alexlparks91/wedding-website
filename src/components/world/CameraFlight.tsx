@@ -33,7 +33,7 @@ function sphericalPos(
 	out: THREE.Vector3,
 ) {
 	const elev = THREE.MathUtils.clamp(el, 0.08, 1.2);
-	const d = THREE.MathUtils.clamp(dist, 2.5, 80);
+	const d = THREE.MathUtils.clamp(dist, 1.2, 80);
 	out.set(
 		target.x + d * Math.cos(elev) * Math.sin(az),
 		target.y + d * Math.sin(elev),

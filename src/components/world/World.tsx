@@ -189,6 +189,8 @@ function Scene({
 	onCameraChange: (state: CameraState) => void;
 }) {
 	const focusingPerson = !inside && (selected === 'tony' || selected === 'alex');
+	const selectedPerson =
+		inside && (selected === 'tony' || selected === 'alex') ? selected : null;
 	const selectedCat = inside && isCatId(selected) ? selected : null;
 	const roomGoal = ROOM_GOALS[condoRoom];
 	const roomCamPos = useMemo(
@@ -222,6 +224,8 @@ function Scene({
 				<CondoInterior
 					selectedCat={selectedCat}
 					onSelectCat={onSelectCat}
+					selectedPerson={selectedPerson}
+					onSelectPerson={onSelectPerson}
 					condoRoom={condoRoom}
 					onPassThroughDoor={onGoToRoom}
 				/>
@@ -231,8 +235,8 @@ function Scene({
 					enableDamping
 					dampingFactor={0.1}
 					target={roomGoal.target}
-					minDistance={3}
-					maxDistance={11}
+					minDistance={condoRoom === 'bath' ? 1.2 : 3}
+					maxDistance={condoRoom === 'bath' ? 5 : 11}
 					minPolarAngle={0.4}
 					maxPolarAngle={Math.PI / 2.3}
 				/>
@@ -385,13 +389,20 @@ export default function World() {
 		window.history.replaceState({}, '', url);
 	}, []);
 
-	const handleSelectPerson = useCallback((focus: PersonFocus) => {
-		setSelected(focus.id);
-		setFlightGoal(personGoal(focus));
-		const url = new URL(window.location.href);
-		url.searchParams.set('at', focus.id);
-		window.history.replaceState({}, '', url);
-	}, []);
+	const handleSelectPerson = useCallback(
+		(focus: PersonFocus) => {
+			setSelected(focus.id);
+			if (inside) {
+				// Stay in condo; don't fly street camera or leave ?at=condo
+				return;
+			}
+			setFlightGoal(personGoal(focus));
+			const url = new URL(window.location.href);
+			url.searchParams.set('at', focus.id);
+			window.history.replaceState({}, '', url);
+		},
+		[inside],
+	);
 
 	const handleSelectCat = useCallback((focus: CatFocus) => {
 		setSelected(focus.id);
@@ -464,7 +475,7 @@ export default function World() {
 	const place = selected ? places[selected] : null;
 	const camPos = sphericalToPosition(cameraState);
 	const canvasInstanceKey = inside
-		? `condo-k20-${condoRoom}-${canvasKey}`
+		? `condo-bay-win-${condoRoom}-${canvasKey}`
 		: `street-alex-hair-${canvasKey}`;
 
 	return (
@@ -509,7 +520,7 @@ export default function World() {
 				<p className={styles.mark}>{inside ? 'Unit 2F' : 'Our world'}</p>
 				<p className={styles.hint}>
 					{inside
-						? 'Drag to orbit · Click the doorway to go through · Or use Kitchen / Living below'
+						? 'Drag to orbit · Click a doorway to go through · Or use Kitchen / Living / Bath / Primary below'
 						: 'Click the door by the mural to come inside · Drag to look'}
 				</p>
 			</header>

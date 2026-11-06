@@ -13,6 +13,8 @@ type Props = {
 	onSelect?: () => void;
 	idle?: boolean;
 	paused?: boolean;
+	/** Legs bent, hips lowered — for sofa / chair */
+	sitting?: boolean;
 	showLabel?: boolean;
 	phase?: number;
 	label: { title: string; sub: string };
@@ -84,6 +86,7 @@ export function HighFidelityPerson({
 	onSelect,
 	idle = false,
 	paused = false,
+	sitting = false,
 	showLabel = true,
 	phase = 0,
 	label,
@@ -109,9 +112,17 @@ export function HighFidelityPerson({
 	const shoulderY = 1.38 * s;
 	const headY = 1.58 * s;
 	const headR = (isTony ? 0.122 : 0.116) * s;
+	/** Hips sit on cushion (~0.65); body lowered so seated legs stay visible on top */
+	const sitDrop = sitting ? -(hipY - 0.72) : 0;
 
 	useFrame(({ clock }) => {
 		const t = clock.elapsedTime;
+
+		if (sitting) {
+			const breathe = Math.sin(t * 1.6 + phase) * 0.006;
+			if (hip.current) hip.current.position.y = breathe;
+			return;
+		}
 
 		if (idle) {
 			if (root.current) root.current.rotation.y = t * 0.5;
@@ -145,10 +156,12 @@ export function HighFidelityPerson({
 
 	const outline = !idle && (selected || hovered);
 	const jeans = isTony ? TONY.jeans : ALEX.jeans;
+	const sleeve = isTony ? TONY.sweater : ALEX.leather;
 
 	return (
 		<group
 			ref={root}
+			position={[0, sitDrop, 0]}
 			scale={[slim, 1, slim]}
 			onClick={(e) => {
 				e.stopPropagation();
@@ -167,57 +180,71 @@ export function HighFidelityPerson({
 			}}
 		>
 			<group ref={hip}>
-				{/* Legs — jeans for both */}
-				<group ref={leftThigh} position={[-0.09 * s, hipY, 0]}>
-					<mesh position={[0, -0.2 * s, 0]} castShadow>
-						<capsuleGeometry args={[0.065 * s, 0.28 * s, 8, 16]} />
-						<meshStandardMaterial color={jeans} roughness={0.88} />
-					</mesh>
-					<group ref={leftShin} position={[0, -0.4 * s, 0]}>
-						<mesh position={[0, -0.18 * s, 0]} castShadow>
-							<capsuleGeometry args={[0.052 * s, 0.26 * s, 8, 16]} />
-							<meshStandardMaterial color={jeans} roughness={0.88} />
-						</mesh>
-						<Shoe s={s} kind={kind} />
-					</group>
-				</group>
+				{sitting ? (
+					<SeatedLimbs
+						s={s}
+						hipY={hipY}
+						shoulderY={shoulderY}
+						jeans={jeans}
+						sleeve={sleeve}
+						skin={isTony ? TONY.skin : ALEX.skin}
+						kind={kind}
+					/>
+				) : (
+					<>
+						{/* Legs — jeans for both */}
+						<group ref={leftThigh} position={[-0.09 * s, hipY, 0]}>
+							<mesh position={[0, -0.2 * s, 0]} castShadow>
+								<capsuleGeometry args={[0.065 * s, 0.28 * s, 8, 16]} />
+								<meshStandardMaterial color={jeans} roughness={0.88} />
+							</mesh>
+							<group ref={leftShin} position={[0, -0.4 * s, 0]}>
+								<mesh position={[0, -0.18 * s, 0]} castShadow>
+									<capsuleGeometry args={[0.052 * s, 0.26 * s, 8, 16]} />
+									<meshStandardMaterial color={jeans} roughness={0.88} />
+								</mesh>
+								<Shoe s={s} kind={kind} />
+							</group>
+						</group>
 
-				<group ref={rightThigh} position={[0.09 * s, hipY, 0]}>
-					<mesh position={[0, -0.2 * s, 0]} castShadow>
-						<capsuleGeometry args={[0.065 * s, 0.28 * s, 8, 16]} />
-						<meshStandardMaterial color={jeans} roughness={0.88} />
-					</mesh>
-					<group ref={rightShin} position={[0, -0.4 * s, 0]}>
-						<mesh position={[0, -0.18 * s, 0]} castShadow>
-							<capsuleGeometry args={[0.052 * s, 0.26 * s, 8, 16]} />
-							<meshStandardMaterial color={jeans} roughness={0.88} />
-						</mesh>
-						<Shoe s={s} kind={kind} />
-					</group>
-				</group>
+						<group ref={rightThigh} position={[0.09 * s, hipY, 0]}>
+							<mesh position={[0, -0.2 * s, 0]} castShadow>
+								<capsuleGeometry args={[0.065 * s, 0.28 * s, 8, 16]} />
+								<meshStandardMaterial color={jeans} roughness={0.88} />
+							</mesh>
+							<group ref={rightShin} position={[0, -0.4 * s, 0]}>
+								<mesh position={[0, -0.18 * s, 0]} castShadow>
+									<capsuleGeometry args={[0.052 * s, 0.26 * s, 8, 16]} />
+									<meshStandardMaterial color={jeans} roughness={0.88} />
+								</mesh>
+								<Shoe s={s} kind={kind} />
+							</group>
+						</group>
+
+						<Arm
+							side={-1}
+							s={s}
+							shoulderY={shoulderY}
+							isTony={isTony}
+							upperRef={leftUpperArm}
+							foreRef={leftFore}
+						/>
+						<Arm
+							side={1}
+							s={s}
+							shoulderY={shoulderY}
+							isTony={isTony}
+							upperRef={rightUpperArm}
+							foreRef={rightFore}
+						/>
+					</>
+				)}
 
 				{isTony ? (
 					<TonySweater s={s} hipY={hipY} shoulderY={shoulderY} />
 				) : (
 					<AlexJacket s={s} hipY={hipY} shoulderY={shoulderY} />
 				)}
-
-				<Arm
-					side={-1}
-					s={s}
-					shoulderY={shoulderY}
-					isTony={isTony}
-					upperRef={leftUpperArm}
-					foreRef={leftFore}
-				/>
-				<Arm
-					side={1}
-					s={s}
-					shoulderY={shoulderY}
-					isTony={isTony}
-					upperRef={rightUpperArm}
-					foreRef={rightFore}
-				/>
 
 				{isTony ? (
 					<TonyHead s={s} headY={headY} headR={headR} />
@@ -346,6 +373,92 @@ function poseIdle(
 	if (rightUpperArm.current) rightUpperArm.current.rotation.x = -0.06;
 	if (leftFore.current) leftFore.current.rotation.x = 0.2;
 	if (rightFore.current) rightFore.current.rotation.x = 0.2;
+}
+
+/**
+ * Explicit seated limbs (no joint math) — thighs on the cushion along +Z,
+ * shins hanging at the seat front, arms resting on lap. Visible above the sofa.
+ */
+function SeatedLimbs({
+	s,
+	hipY,
+	shoulderY,
+	jeans,
+	sleeve,
+	skin,
+	kind,
+}: {
+	s: number;
+	hipY: number;
+	shoulderY: number;
+	jeans: string;
+	sleeve: string;
+	skin: string;
+	kind: AvatarKind;
+}) {
+	const thighY = hipY - 0.04 * s;
+	const thighZ = 0.22 * s;
+	const shinY = hipY - 0.32 * s;
+	const shinZ = 0.48 * s;
+	return (
+		<group>
+			{([-1, 1] as const).map((side) => (
+				<group key={`leg-${side}`}>
+					{/* Thigh on cushion, pointing toward coffee table (+Z) */}
+					<mesh
+						position={[side * 0.1 * s, thighY, thighZ]}
+						rotation={[Math.PI / 2, 0, 0]}
+						castShadow
+					>
+						<capsuleGeometry args={[0.07 * s, 0.32 * s, 8, 14]} />
+						<meshStandardMaterial color={jeans} roughness={0.88} />
+					</mesh>
+					{/* Shin hanging off seat front */}
+					<mesh position={[side * 0.1 * s, shinY, shinZ]} castShadow>
+						<capsuleGeometry args={[0.055 * s, 0.28 * s, 8, 14]} />
+						<meshStandardMaterial color={jeans} roughness={0.88} />
+					</mesh>
+					<group position={[side * 0.1 * s, shinY - 0.22 * s, shinZ]}>
+						<Shoe s={s} kind={kind} />
+					</group>
+				</group>
+			))}
+			{([-1, 1] as const).map((side) => (
+				<group key={`arm-${side}`}>
+					{/* Upper arm down-forward onto lap */}
+					<mesh
+						position={[side * 0.26 * s, shoulderY - 0.12 * s, 0.1 * s]}
+						rotation={[0.9, 0, side * 0.35]}
+						castShadow
+					>
+						<capsuleGeometry args={[0.05 * s, 0.22 * s, 8, 12]} />
+						<meshStandardMaterial
+							color={sleeve}
+							roughness={kind === 'tony' ? 0.82 : 0.4}
+							metalness={kind === 'tony' ? 0 : 0.15}
+						/>
+					</mesh>
+					{/* Forearm / hand on thigh */}
+					<mesh
+						position={[side * 0.14 * s, hipY + 0.02 * s, 0.28 * s]}
+						rotation={[1.2, 0, side * 0.15]}
+						castShadow
+					>
+						<capsuleGeometry args={[0.04 * s, 0.16 * s, 8, 12]} />
+						<meshStandardMaterial
+							color={sleeve}
+							roughness={kind === 'tony' ? 0.82 : 0.4}
+							metalness={kind === 'tony' ? 0 : 0.15}
+						/>
+					</mesh>
+					<mesh position={[side * 0.08 * s, hipY - 0.02 * s, 0.4 * s]} castShadow>
+						<sphereGeometry args={[0.038 * s, 10, 10]} />
+						<SkinMaterial kind={kind} color={skin} />
+					</mesh>
+				</group>
+			))}
+		</group>
+	);
 }
 
 function TonySweater({
@@ -786,16 +899,44 @@ function AlexHead({
 				<meshStandardMaterial color="#c45a68" roughness={0.65} />
 			</mesh>
 
-			{/* Long wavy auburn hair — must sit OUTSIDE the head so it reads from the front */}
-			{/* Cap (top only, not a full helmet) */}
+			{/* Long wavy auburn hair — thick crown so top-down views show no scalp */}
 			<mesh
-				position={[0, headY + headR * 0.55, -headR * 0.1]}
+				position={[0, headY + headR * 0.5, -headR * 0.08]}
 				castShadow
-				scale={[1.2, 0.55, 1.15]}
+				scale={[1.5, 1.15, 1.45]}
 			>
-				<sphereGeometry args={[headR * 0.95, 16, 16]} />
+				<sphereGeometry args={[headR, 24, 24]} />
 				<meshStandardMaterial color={ALEX.hair} roughness={0.88} />
 			</mesh>
+			{/* Apex plug */}
+			<mesh position={[0, headY + headR * 1.2, 0]} castShadow>
+				<sphereGeometry args={[headR * 0.78, 16, 16]} />
+				<meshStandardMaterial color={ALEX.hairLit} roughness={0.9} />
+			</mesh>
+			{/* Fill around crown rim */}
+			{(
+				[
+					[0.55, 0.9, 0.2],
+					[-0.55, 0.9, 0.2],
+					[0.4, 1.0, -0.35],
+					[-0.4, 1.0, -0.35],
+					[0, 1.05, -0.5],
+					[0.7, 0.7, 0],
+					[-0.7, 0.7, 0],
+				] as const
+			).map(([x, y, z], i) => (
+				<mesh
+					key={`crown-${i}`}
+					position={[x * headR, headY + y * headR, z * headR]}
+					castShadow
+				>
+					<sphereGeometry args={[headR * 0.42, 12, 12]} />
+					<meshStandardMaterial
+						color={i % 2 ? ALEX.hairLit : ALEX.hair}
+						roughness={0.9}
+					/>
+				</mesh>
+			))}
 			{/* Bangs over forehead */}
 			{([-0.4, -0.15, 0.15, 0.4] as const).map((x, i) => (
 				<mesh

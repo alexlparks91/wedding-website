@@ -1,8 +1,10 @@
 import type { CameraGoal } from './CameraFlight';
 import { PLAN_CENTERS } from './condoLayout';
+import { getBathGoal } from './HallBath';
 import { getLivingGoal } from './LivingDining';
+import { getPrimaryGoal } from './PrimaryBedroom';
 
-export type CondoRoomId = 'kitchen' | 'living' | 'hall';
+export type CondoRoomId = 'kitchen' | 'living' | 'primary' | 'bath' | 'hall';
 
 export type CondoRoomInfo = {
 	id: CondoRoomId;
@@ -12,7 +14,7 @@ export type CondoRoomInfo = {
 	facts: string[];
 };
 
-export const NAV_ROOMS: Exclude<CondoRoomId, 'hall'>[] = ['kitchen', 'living'];
+export const NAV_ROOMS: Exclude<CondoRoomId, 'hall'>[] = ['kitchen', 'living', 'bath', 'primary'];
 
 const [kx, kz] = PLAN_CENTERS.kitchen;
 
@@ -24,6 +26,8 @@ export const ROOM_GOALS: Record<Exclude<CondoRoomId, 'hall'>, CameraGoal> = {
 		el: 0.75,
 	},
 	living: getLivingGoal(),
+	bath: getBathGoal(),
+	primary: getPrimaryGoal(),
 };
 
 export const ROOM_COPY: Record<CondoRoomId, CondoRoomInfo> = {
@@ -38,6 +42,20 @@ export const ROOM_COPY: Record<CondoRoomId, CondoRoomInfo> = {
 		id: 'living',
 		title: 'Living',
 		subtitle: 'Through the kitchen doorway',
+		body: '',
+		facts: [],
+	},
+	bath: {
+		id: 'bath',
+		title: 'Bath',
+		subtitle: 'First door on the right',
+		body: '',
+		facts: [],
+	},
+	primary: {
+		id: 'primary',
+		title: 'Primary',
+		subtitle: 'Through the living doors',
 		body: '',
 		facts: [],
 	},
